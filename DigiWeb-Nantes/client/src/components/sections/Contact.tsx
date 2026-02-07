@@ -51,7 +51,8 @@ export default function Contact() {
       });
       form.reset();
     } catch (error) {
-      console.error('Contact form error:', error);
+      // Log sanitized error message without exposing sensitive details
+      console.error('Contact form error: Failed to send message');
       toast({
         title: "Erreur",
         description: "Une erreur est survenue. Veuillez réessayer.",
