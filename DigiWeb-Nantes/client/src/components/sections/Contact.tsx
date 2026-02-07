@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -17,6 +18,7 @@ const formSchema = z.object({
 
 export default function Contact() {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -26,13 +28,39 @@ export default function Contact() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: "Message envoyé !",
-      description: "Nous vous recontacterons dans les plus brefs délais.",
-    });
-    form.reset();
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send message');
+      }
+
+      toast({
+        title: "Message envoyé !",
+        description: "Nous vous recontacterons dans les plus brefs délais.",
+      });
+      form.reset();
+    } catch (error) {
+      // Log sanitized error message without exposing sensitive details
+      console.error('Contact form error: Failed to send message');
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -110,8 +138,8 @@ export default function Contact() {
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full bg-primary hover:bg-secondary hover:text-secondary-foreground text-lg py-6 transition-all duration-300">
-                      Envoyer le message
+                    <Button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-secondary hover:text-secondary-foreground text-lg py-6 transition-all duration-300">
+                      {isSubmitting ? "Envoi en cours..." : "Envoyer le message"}
                     </Button>
                   </form>
                 </Form>
