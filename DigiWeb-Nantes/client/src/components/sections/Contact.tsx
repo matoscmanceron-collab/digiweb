@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
 
 const formSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -26,13 +27,40 @@ export default function Contact() {
     },
   });
 
+  const contactMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Erreur lors de l'envoi du message");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Message envoyé !",
+        description: "Nous vous recontacterons dans les plus brefs délais.",
+      });
+      form.reset();
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    },
+  });
+
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: "Message envoyé !",
-      description: "Nous vous recontacterons dans les plus brefs délais.",
-    });
-    form.reset();
+    contactMutation.mutate(values);
   }
 
   return (
@@ -110,8 +138,12 @@ export default function Contact() {
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full bg-primary hover:bg-secondary hover:text-secondary-foreground text-lg py-6 transition-all duration-300">
-                      Envoyer le message
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-primary hover:bg-secondary hover:text-secondary-foreground text-lg py-6 transition-all duration-300"
+                      disabled={contactMutation.isPending}
+                    >
+                      {contactMutation.isPending ? "Envoi en cours..." : "Envoyer le message"}
                     </Button>
                   </form>
                 </Form>
