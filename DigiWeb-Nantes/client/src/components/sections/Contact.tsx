@@ -55,7 +55,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-900">Email</h4>
-                  <p className="text-slate-600">mail@digiwebfr.studio</p>
+                  <p className="text-slate-600">contact@digiwebfr.studio</p>
                 </div>
               </div>
               
